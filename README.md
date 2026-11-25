@@ -40,10 +40,10 @@ Za svaki skok:
 - Ako je $r_i > r_{i+1}$ (prepreka je na $i+1$), prebrisuju se zrake prema natrag: od $i-N_{\text{beams}}+1$ do $i+1$ s vrijednošću $r_{\text{close}}$.
 
 ### Korak 3: Odabir najboljeg smjera kretanja (`find_furthest_direction`)
-- Pronalazi se maksimalna dubina na modificiranom scanu ($r_{\text{max}} = \max(r)$).
+- Pronalazi se maksimalna dubina na modificiranom scanu ($r_{\max} = \max(r)$).
 - Pronalaze se sve zrake koje dosežu prag dubine:
-  $$r \ge \text{far\_ratio} \cdot r_{\text{max}}$$
-  (npr. sve zrake koje dosežu barem 85% maksimalnog dometa).
+  $$r \ge \alpha \cdot r_{\max}$$
+  gdje je $\alpha = 0.85$ (parametar `far_ratio`, odnosno 85% maksimalnog dometa).
 - Te "duboke" zrake se grupiraju u kontinuirane prolaze; bira se najširi prolaz, a ciljni kut upravljanja postavlja se u **točno središte najšireg prolaza**.
 
 ### Korak 4: Dinamička brzina (`calculate_speed`)
@@ -62,7 +62,7 @@ U odnosu na naivnu implementaciju dodana su sljedeća poboljšanja:
 2. **Središte najdubljeg kontinuiranog prozora (Center of Deepest Window):** Klasični `argmax` često bira rubnu zraku ako je više zraka jednako udaljeno (npr. sve na maksimalnom dometu), što uzrokuje oscilacije kotača. Naše rješenje pronalazi najširi pojas dubokih zraka i cilja u njegovu geometrijsku sredinu, čime vozilo vozi točno po sredini staze.
 3. **Dvostruko profiliranje brzine:** Brzina ovisi i o kutu upravljanja i o frontalnoj udaljenosti (`forward_distance`), što omogućuje visoke brzine na ravnicama uz pouzdano i stabilno kočenje pred zavojima.
 4. **RViz vizualizacija u stvarnom vremenu:** Čvor objavljuje `/scan_proc` (preprocesirani podaci), `/scan_extended` (proširene prepreke gdje se jasno vidi stvorena "sjena") i `/target_marker` (zelena 3D strelica smjera kretanja).
-5. **Čisto zaustavljanje pri prekidu (Graceful Stop):** Prilikom pritiska na `Ctrl+C`, čvor presreće signal i prije gašenja šalje komandu s brzinom $0.0\text{ m/s}$, sprječavajući da se vozilo nekontrolirano nastavi kretati.
+5. **Čisto zaustavljanje pri prekidu (Graceful Stop):** Prilikom pritiska na `Ctrl+C`, čvor presreće signal i prije gašenja šalje komandu s brzinom 0.0 m/s, sprječavajući da se vozilo nekontrolirano nastavi kretati.
 
 ---
 
