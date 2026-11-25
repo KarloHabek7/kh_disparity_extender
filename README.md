@@ -21,7 +21,7 @@ Arhitektura koda je podijeljena u dva modula:
 - `kh_disparity_extender/disparity_extender_node.py`: ROS 2 čvor koji prima `/scan`, prosljeđuje ga algoritmu, objavljuje `/drive` i šalje dijagnostičke podatke u RViz.
 
 ### Korak 1: Preprocesiranje LiDAR podataka (`preprocess_scan`)
-1. Ograničavanje vidnog polja: uzimaju se samo prednje zrake unutar simetričnog kuta ispred vozila (npr. $\pm 75^\circ$), jer zrake iza i bočno od vozila ne utječu na prednje planiranje.
+1. Ograničavanje vidnog polja: uzimaju se samo prednje zrake unutar simetričnog kuta ispred vozila (npr. $\pm 90^\circ$ za $180^\circ$ FOV), jer zrake iza vozila ne utječu na prednje planiranje.
 2. Zamjena `NaN` i `Inf` očitanja s gornjom granicom dometa (`max_lidar_range`).
 3. Ograničavanje svih mjerenja na `max_lidar_range`.
 4. Zaglađivanje 1D medijan filtrom radi uklanjanja šuma pojedinačnih zraka.
@@ -41,12 +41,14 @@ Za svaki skok:
 
 ### Korak 3: Odabir najboljeg smjera kretanja (`find_furthest_direction`)
 - Pronalazi se maksimalna dubina na modificiranom scanu ($r_{\text{max}} = \max(r)$).
-- Pronalaze se sve zrake koje dosežu $\ge \text{far\_ratio} \cdot r_{\text{max}}$ (npr. 90% maksimalnog dometa).
+- Pronalaze se sve zrake koje dosežu prag dubine:
+  $$r \ge \text{far\_ratio} \cdot r_{\text{max}}$$
+  (npr. sve zrake koje dosežu barem 85% maksimalnog dometa).
 - Te "duboke" zrake se grupiraju u kontinuirane prolaze; bira se najširi prolaz, a ciljni kut upravljanja postavlja se u **točno središte najšireg prolaza**.
 
 ### Korak 4: Dinamička brzina (`calculate_speed`)
 Brzina se dinamički skalira:
-- Na ravnim dijelovima (mali kut skretanja i čist prolaz ispred) vozilo vozi maksimalnom brzinom (`max_speed = 4.5 m/s`).
+- Na ravnim dijelovima (mali kut skretanja i čist prolaz ispred) vozilo vozi maksimalnom brzinom (`max_speed = 4.0 m/s`).
 - U oštrim zavojima brzina glatko pada prema minimalnoj (`min_speed = 1.5 m/s`).
 - Ako je prepreka direktno ispred vozila na udaljenosti manjoj od `slow_down_distance`, brzina se dodatno reducira radi sprječavanja naleta.
 
@@ -60,7 +62,7 @@ U odnosu na naivnu implementaciju dodana su sljedeća poboljšanja:
 2. **Središte najdubljeg kontinuiranog prozora (Center of Deepest Window):** Klasični `argmax` često bira rubnu zraku ako je više zraka jednako udaljeno (npr. sve na maksimalnom dometu), što uzrokuje oscilacije kotača. Naše rješenje pronalazi najširi pojas dubokih zraka i cilja u njegovu geometrijsku sredinu, čime vozilo vozi točno po sredini staze.
 3. **Dvostruko profiliranje brzine:** Brzina ovisi i o kutu upravljanja i o frontalnoj udaljenosti (`forward_distance`), što omogućuje visoke brzine na ravnicama uz pouzdano i stabilno kočenje pred zavojima.
 4. **RViz vizualizacija u stvarnom vremenu:** Čvor objavljuje `/scan_proc` (preprocesirani podaci), `/scan_extended` (proširene prepreke gdje se jasno vidi stvorena "sjena") i `/target_marker` (zelena 3D strelica smjera kretanja).
-5. **Čisto zaustavljanje pri prekidu (Graceful Stop):** Prilikom pritiska na `Ctrl+C`, čvor presreće signal i prije gašenja šalje komandu s brzinom $0.0\,\text{m/s}$, sprječavajući da se vozilo nekontrolirano nastavi kretati.
+5. **Čisto zaustavljanje pri prekidu (Graceful Stop):** Prilikom pritiska na `Ctrl+C`, čvor presreće signal i prije gašenja šalje komandu s brzinom $0.0\text{ m/s}$, sprječavajući da se vozilo nekontrolirano nastavi kretati.
 
 ---
 
@@ -74,14 +76,14 @@ Svi ključni parametri mogu se mijenjati bez rekompajliranja:
 | `safety_margin` | `0.15` m | Dodatna sigurnosna margina uz prepreku |
 | `max_steering_angle` | `0.34` rad | Maksimalni mehanički kut upravljanja (~19.5°) |
 | `disparity_threshold` | `0.35` m | Minimalni skok udaljenosti koji se smatra rubom prepreke |
-| `fov_degrees` | `150.0`° | Kutno vidno polje ispred vozila (-75° do +75°) |
-| `max_lidar_range` | `12.0` m | Gornja granica dometa LiDAR zraka |
+| `fov_degrees` | `180.0`° | Kutno vidno polje ispred vozila (-90° do +90°) |
+| `max_lidar_range` | `15.0` m | Gornja granica dometa LiDAR zraka |
 | `filter_window_size` | `3` | Veličina prozora medijan filtra (1 = isključeno) |
-| `far_ratio` | `0.90` | Udio maksimalne udaljenosti za duboki prozor (90%) |
-| `max_speed` | `4.5` m/s | Najveća brzina na ravnim segmentima |
+| `far_ratio` | `0.85` | Udio maksimalne udaljenosti za duboki prozor (85%) |
+| `max_speed` | `4.0` m/s | Najveća brzina na ravnim segmentima |
 | `min_speed` | `1.5` m/s | Minimalna brzina u oštrim zavojima |
-| `speed_steer_threshold` | `0.12` rad | Kut skretanja iznad kojeg počinje kočenje |
-| `slow_down_distance` | `1.5` m | Udaljenost ispred vozila ispod koje se usporava |
+| `speed_steer_threshold` | `0.10` rad | Kut skretanja iznad kojeg počinje kočenje |
+| `slow_down_distance` | `3.0` m | Udaljenost ispred vozila ispod koje se usporava |
 | `scan_topic` | `"scan"` | Naziv dolazne LiDAR teme |
 | `drive_topic` | `"drive"` | Naziv odlazne teme upravljanja |
 
@@ -114,9 +116,9 @@ U prvom terminalu unutar kontejnera pokrenite simulator na željenoj mapi:
 U datoteci `vjezbe-primjeri/config/sim_config.yaml` postavite:
 ```yaml
 map_path: 'maps/Spielberg'
-sx: 0.0
-sy: 0.0
-stheta: 0.0
+sx: -0.04
+sy: -0.85
+stheta: 3.40
 ```
 I pokrenite:
 ```bash
