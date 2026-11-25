@@ -43,16 +43,17 @@ disparity_extender_node:
     # 4. Profiliranje brzine
     # -------------------------------------------------------------
     # Maksimalna brzina na ravnici kada vozilo ide ravno [m/s]
-    max_speed: 4.5
+    # (Za hodnik Levine preporučeno 2.0 - 2.5 m/s; za otvorenu stazu Spielberg 4.0 - 5.0 m/s)
+    max_speed: 2.2
 
     # Minimalna brzina u oštrim zavojima [m/s]
-    min_speed: 1.5
+    min_speed: 0.8
 
     # Kut skretanja [rad] iznad kojeg počinje proporcionalno usporavanje
-    speed_steer_threshold: 0.12
+    speed_steer_threshold: 0.10
 
-    # Udaljenost ispred vozila [m] ispod koje se forsira minimalna brzina (izbjegavanje frontalnog sudara)
-    slow_down_distance: 1.5
+    # Udaljenost ispred vozila [m] ispod koje se forsira kočenje pred zidom
+    slow_down_distance: 2.5
 
     # -------------------------------------------------------------
     # 5. Teme (Topics)
