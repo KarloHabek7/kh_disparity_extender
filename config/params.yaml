@@ -1,0 +1,61 @@
+# Konfiguracijski parametri za Disparity Extender čvor
+# Svi parametri se mogu dinamički podešavati bez rekompajliranja koda.
+
+disparity_extender_node:
+  ros__parameters:
+    # -------------------------------------------------------------
+    # 1. Geometrija vozila i sigurnosna margina
+    # -------------------------------------------------------------
+    # Stvarna širina F1TENTH modela (cca 0.31 m)
+    car_width: 0.31
+
+    # Dodatna sigurnosna margina dodana na polovicu širine vozila [m]
+    # Ukupno proširenje = (car_width / 2) + safety_margin
+    safety_margin: 0.15
+
+    # Maksimalni mehanički kut skretanja kotača [rad] (cca 0.34 rad = ~19.5°)
+    max_steering_angle: 0.34
+
+    # -------------------------------------------------------------
+    # 2. Parametri Disparity Extender algoritma
+    # -------------------------------------------------------------
+    # Prag skoka udaljenosti [m] između dvije susjedne zrake koji detektira rub prepreke
+    disparity_threshold: 0.35
+
+    # Kutno vidno polje koje auto uzima u obzir [stupnjevi] (simetrično ispred auta)
+    # Npr. 150° znači od -75° do +75° (zrake iza i sa strane se ignoriraju)
+    fov_degrees: 150.0
+
+    # Maksimalna udaljenost [m] na koju ograničavamo LiDAR zrake (također zamjenjuje inf/nan)
+    max_lidar_range: 12.0
+
+    # Veličina prozora 1D medijan filtra za uklanjanje pojedinačnog šuma zraka (1 = isključeno)
+    filter_window_size: 3
+
+    # -------------------------------------------------------------
+    # 3. Odabir smjera kretanja (Target heading)
+    # -------------------------------------------------------------
+    # Omjer (0.0 do 1.0) maksimalne udaljenosti za prepoznavanje "dubokog prostora"
+    # Auto traži najširi pojas zraka s udaljenošću >= far_ratio * max_distance i cilja u njegovu sredinu
+    far_ratio: 0.90
+
+    # -------------------------------------------------------------
+    # 4. Profiliranje brzine
+    # -------------------------------------------------------------
+    # Maksimalna brzina na ravnici kada vozilo ide ravno [m/s]
+    max_speed: 4.5
+
+    # Minimalna brzina u oštrim zavojima [m/s]
+    min_speed: 1.5
+
+    # Kut skretanja [rad] iznad kojeg počinje proporcionalno usporavanje
+    speed_steer_threshold: 0.12
+
+    # Udaljenost ispred vozila [m] ispod koje se forsira minimalna brzina (izbjegavanje frontalnog sudara)
+    slow_down_distance: 1.5
+
+    # -------------------------------------------------------------
+    # 5. Teme (Topics)
+    # -------------------------------------------------------------
+    scan_topic: "scan"
+    drive_topic: "drive"
